@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "unity-rapid-prototyping": {
+      "source": "luisplata/unity-gamejam",
+      "sourceType": "github",
+      "skillPath": "skills/unity-rapid-prototyping/SKILL.md",
+      "computedHash": "6153a1a58981a3ccf996a07daa63536ecc3313d4ea4de4ad84041c552f200fe6"
+    }
+  }
+}

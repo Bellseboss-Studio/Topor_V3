@@ -1,0 +1,87 @@
+# This .gitignore is from the official Unity gitignore template
+# https://github.com/github/gitignore/blob/main/Unity.gitignore
+
+# = Core
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Uu]ser[Ll]og/
+
+# = MemoryCaptures
+[Mm]emoryCaptures/
+
+# = Recordings
+[Rr]ecordings/
+
+# = Unity3D generated meta files
+# *.meta
+
+# = Unity3D Generated File On Crash Reports
+sysinfo.txt
+
+# = Builds
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# = Crashlytics
+crashlytics-build.properties
+
+# = Packed Addressables
+*.bundle
+Assets/AddressableAssetsData/
+
+# = Temporary auto-generated Android Assets
+Assets/StreamingAssets/aa.meta
+Assets/StreamingAssets/aa/*
+
+# = Visual Studio
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# = OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# = Windows
+*.exe
+*.dll
+*.so
+*.dylib
+*.zip
+*.7z
+
+# = WebGL
+Builds/WebGL/
+
+# = Temp files
+*.tmp
+*.temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
