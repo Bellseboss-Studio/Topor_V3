@@ -11,20 +11,17 @@ public sealed class Mole : MonoBehaviour
     [SerializeField] private Transform spriteTransform;
     [SerializeField] private SpriteRenderer fruitSprite; // carried fruit during escape juice (optional)
     [SerializeField] private Transform fruitTransform;
-    [SerializeField] private Color telegraphTint = new Color(1f, 0.6f, 0.15f, 1f);
 
     private GameRules _rules;
     private int _index;
 
-    private Vector2 _phaseScale = Vector2.zero; // from SyncFromRules (telegraph peek / rise/sink squash)
+    private Vector2 _phaseScale = Vector2.zero; // from SyncFromRules (rise/sink squash)
     private float _juiceTimerMs;                // > 0 while hit pop/flash active
     private float _escapeJuiceMs;               // > 0 while escape carry-off runs
-    private bool _telegraphing;                 // phase is Telegraphing -> announcement tint
 
     private const float JuiceDurationMs = 150f;
     private const float PopScale = 1.3f;
     private const float EscapeJuiceDurationMs = 800f; // ~0.8s carry-off (presentation only)
-    private const float TelegraphPeekScale = 0.4f;
     private const float HopHeight = 0.6f;
 
     private Color _normalColor = Color.white;
@@ -51,32 +48,25 @@ public sealed class Mole : MonoBehaviour
         switch (_rules.GetPhase(_index))
         {
             case MolePhase.Sunk:
-                _phaseScale = Vector2.zero;
-                _telegraphing = false;
-                break;
-
             case MolePhase.Telegraphing:
-                // Peek: mole announces itself from the hole before fully rising.
-                _phaseScale = new Vector2(TelegraphPeekScale, TelegraphPeekScale);
-                _telegraphing = true;
+                // Telegraphing hides the mole completely (gameplay: the warning only
+                // shows the threatened fruit — the spawn hole must NOT be readable).
+                _phaseScale = Vector2.zero;
                 break;
 
             case MolePhase.Rising:
                 float tRise = Mathf.Clamp01((nowMs - phaseStart) / Mathf.Max(1f, _rules.RiseDurationMs));
                 _phaseScale = new Vector2(0.2f + 0.8f * tRise, 0.2f + 0.8f * tRise);
-                _telegraphing = false;
                 break;
 
             case MolePhase.Up:
                 _phaseScale = Vector2.one;
-                _telegraphing = false;
                 break;
 
             case MolePhase.Sinking:
                 float tSink = Mathf.Clamp01((nowMs - phaseStart) / Mathf.Max(1f, _rules.SinkDurationMs));
                 float s = 1f - 0.8f * tSink;
                 _phaseScale = new Vector2(s, s);
-                _telegraphing = false;
                 break;
         }
 
@@ -156,16 +146,6 @@ public sealed class Mole : MonoBehaviour
                 spriteTransform.localScale = new Vector3(_phaseScale.x * pop, _phaseScale.y * pop, 1f);
             if (spriteRenderer != null)
                 spriteRenderer.color = Color.Lerp(Color.white, _normalColor, eased);
-            return;
-        }
-
-        if (_telegraphing)
-        {
-            // Telegraph announcement tint on top of the peek scale.
-            if (spriteTransform != null)
-                spriteTransform.localScale = new Vector3(_phaseScale.x, _phaseScale.y, 1f);
-            if (spriteRenderer != null)
-                spriteRenderer.color = Color.Lerp(_normalColor, telegraphTint, 0.5f + 0.5f * Mathf.Sin(Time.time * 12f));
             return;
         }
 

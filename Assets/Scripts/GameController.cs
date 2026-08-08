@@ -33,14 +33,16 @@ public sealed class GameController : MonoBehaviour
     [SerializeField] private float baseSpawnIntervalSec = 3f;
 
     [Header("References")]
-    [SerializeField] private Mole[] moles;          // one per hole (10, per adjacency table)
+    [SerializeField] private Mole[] moles;          // one per hole (17, per adjacency table)
     [SerializeField] private Crop[] crops;          // the 2x3 grid (6) — crops ARE lives
-    [SerializeField] private HoleAdjacency[] holeAdjacencies; // 10 rows, index = hole = Mole n
+    [SerializeField] private Hole[] holes;          // one per hole (17) — visual presenters
+    [SerializeField] private HoleAdjacency[] holeAdjacencies; // 17 rows, index = hole = Mole n
     [SerializeField] private Camera mainCamera;
     [SerializeField] private Text scoreText;        // "Puntos: N"
     [SerializeField] private Text remainingTimeText; // "01:00" ticking down (A5)
 
     private GameRules _rules;
+    private HoleVisuals _holeVisuals;
     private InputAction _tapAction;
     private InputAction _pointAction;
     private float _elapsedMs;
@@ -76,11 +78,14 @@ public sealed class GameController : MonoBehaviour
             for (int i = 0; i < moles.Length; i++)
                 if (moles[i] != null) moles[i].Bind(_rules, i);
 
+        _holeVisuals = new HoleVisuals(cfg.HoleCount, 150f);
+
         _spawnCooldownMs = _rules.SpawnIntervalMs(0f);
 
         // Input created in code (no generated class, no asset plumbing).
         _tapAction = new InputAction("Tap", InputActionType.Button);
-        _tapAction.AddBinding("<Mouse>/leftButton");
+        _tapAction.AddBinding("<Pointer>/press");       // works for mouse + touch in simulator
+        _tapAction.AddBinding("<Mouse>/leftButton");    // explicit mouse fallback
         _tapAction.AddBinding("<Touchscreen>/touch*/press");
         _tapAction.performed += OnTap;
 
@@ -134,26 +139,51 @@ public sealed class GameController : MonoBehaviour
             for (int i = 0; i < moles.Length; i++)
                 if (moles[i] != null) moles[i].SyncFromRules(_elapsedMs);
 
+        if (holes != null && _holeVisuals != null)
+            for (int i = 0; i < holes.Length; i++)
+                if (holes[i] != null) holes[i].SetState(_holeVisuals.StateFor(i, _rules.GetPhase(i), _elapsedMs), _elapsedMs);
+
         UpdateCrops();
         UpdateHud();
     }
 
     private void OnTap(InputAction.CallbackContext context)
     {
-        if (_rules == null || _rules.IsGameOver || moles == null) return;
+        if (_rules == null || _rules.IsGameOver || moles == null || _holeVisuals == null) return;
 
         Vector2 screenPos = _pointAction.ReadValue<Vector2>();
-        Vector3 world = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, mainCamera.nearClipPlane));
+        // Camera at z=-10, holes at z=0 → distance = 10
+        float camToWorldZ = -mainCamera.transform.position.z;
+        Vector3 world = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, camToWorldZ));
 
-        for (int i = 0; i < moles.Length; i++)
+        // Order holes by distance to the tap, then hit the FIRST hittable mole in
+        // range. Edge-click bug: holes are 0.75/0.7u apart but a risen mole's visual
+        // spans up to ~1.2u, so the closest hole to the tap can be a Sunk neighbour
+        // while the real target is the second-closest. Trying all in range, in order,
+        // restores the grid-v2 "hit the first hittable" behaviour (no colliders — math).
+        int n = moles.Length;
+        int[] order = new int[n];
+        float[] distSq = new float[n];
+        for (int i = 0; i < n; i++) { order[i] = i; distSq[i] = float.MaxValue; if (moles[i] != null) distSq[i] = (world - moles[i].transform.position).sqrMagnitude; }
+        System.Array.Sort(order, (a, b) => distSq[a].CompareTo(distSq[b]));
+
+        const float HitRadiusSq = 0.36f; // 0.6^2
+        for (int k = 0; k < n; k++)
         {
-            if (moles[i] == null) continue;
-            if (moles[i].ContainsPoint(world) && _rules.TryHit(i, _elapsedMs))
+            int i = order[k];
+            if (moles[i] == null || distSq[i] > HitRadiusSq) break; // beyond 0.6u
+            if (_rules.TryHit(i, _elapsedMs))
             {
-                moles[i].PlayHitJuice();
-                break; // one mole per tap
+                if (moles[i] != null) moles[i].PlayHitJuice();
+                _holeVisuals.RegisterTap(i, true, _elapsedMs);
+                return;
             }
         }
+
+        // No hittable mole inside the radius: flash a miss on the nearest hole only
+        // if the tap actually landed on/near a hole (V6-S3: tap > 0.6u → no flash).
+        if (n > 0 && distSq[order[0]] <= HitRadiusSq)
+            _holeVisuals.RegisterTap(order[0], false, _elapsedMs);
     }
 
     // Flash the crop while any telegraphing mole threatens it; stolen crops are
