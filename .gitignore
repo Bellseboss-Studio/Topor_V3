@@ -88,3 +88,7 @@ yarn-error.log*
 
 # Screenshots
 [Ss]creenshots/
+
+# Unity Test Framework run artifacts
+Assets/Resources/PerformanceTestRun*
+Assets/Resources.meta
