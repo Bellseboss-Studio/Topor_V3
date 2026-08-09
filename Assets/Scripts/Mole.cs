@@ -4,6 +4,11 @@ using UnityEngine;
 // scale/position + hit feedback. ZERO game rules live here. Visuals are additive —
 // escape juice (~0.8s hop carrying the fruit) plays in parallel to the rules sink
 // and never affects game timing (design D6).
+//
+// Animation bridge (B-6): when animator is assigned (drag-drop subclass via Inspector),
+// intents dispatch to the animator and mole's own inline visuals are disabled for that
+// lifecycle. When animator is null, SyncFromRules + PlayHitJuice/PlayEscapeJuice work
+// exactly as before (zero visual regression).
 public sealed class Mole : MonoBehaviour
 {
     [SerializeField] private float hitRadius = 0.6f; // grid-v2: 0.9–1.2u visuals, covers Rising scale
@@ -11,6 +16,10 @@ public sealed class Mole : MonoBehaviour
     [SerializeField] private Transform spriteTransform;
     [SerializeField] private SpriteRenderer fruitSprite; // carried fruit during escape juice (optional)
     [SerializeField] private Transform fruitTransform;
+
+    // Animation bridge: assign a MoleAnimator subclass to delegate visuals.
+    // Null = use existing SyncFromRules pipeline (zero regression).
+    [SerializeField] private MoleAnimator animator;
 
     private GameRules _rules;
     private int _index;
@@ -25,6 +34,11 @@ public sealed class Mole : MonoBehaviour
     private const float HopHeight = 0.6f;
 
     private Color _normalColor = Color.white;
+
+    /// <summary>
+    /// SetSpecies triggered only at cycle start. Reset to false when a new lifecycle begins.
+    /// </summary>
+    private bool _speciesDispatched;
 
     private void Awake()
     {
@@ -85,6 +99,69 @@ public sealed class Mole : MonoBehaviour
     public bool ContainsPoint(Vector2 worldPoint)
     {
         return Vector2.Distance(transform.position, worldPoint) <= hitRadius;
+    }
+
+    // --- Animation bridge dispatch (B-6) ---
+
+    /// <summary>
+    /// Receives a phase-edge intent from the tracker (via GameController).
+    /// If animator is assigned, dispatches to the virtual callback and skips inline visuals.
+    /// If animator is null, this is a no-op — SyncFromRules handles visuals.
+    ///
+    /// SetSpecies is called exactly once per lifecycle: on the first Hide (telegraph mole)
+    /// or first Rise (ninja). The _speciesDispatched flag prevents repeated calls.
+    /// </summary>
+    public void OnIntent(MoleIntentEvent ev)
+    {
+        if (animator != null)
+        {
+            // Species delivery: one-shot at cycle start
+            if (ev.Species != null && !_speciesDispatched &&
+                (ev.Intent == MoleIntent.Hide || ev.Intent == MoleIntent.Rise))
+            {
+                animator.SetSpecies(ev.Species);
+                _speciesDispatched = true;
+            }
+
+            switch (ev.Intent)
+            {
+                case MoleIntent.Hide:   animator.OnHide(); break;
+                case MoleIntent.Rise:   animator.OnRise(); break;
+                case MoleIntent.Search: animator.OnSearch(); break;
+                case MoleIntent.Sink:   animator.OnSink(); break;
+                case MoleIntent.Hit:    break; // dispatched via OnRawHit, not OnIntent
+                case MoleIntent.Escape: break; // dispatched via OnRawEscape, not OnIntent
+                case MoleIntent.Reset:
+                    _speciesDispatched = false; // ready for next lifecycle
+                    animator.OnReset();
+                    break;
+            }
+        }
+        // else: null animator → SyncFromRules continues unchanged (zero regression)
+    }
+
+    /// <summary>
+    /// Routes a raw hit event from TryHit (input phase).
+    /// Dispatches to animator.OnHit() if assigned; otherwise falls back to PlayHitJuice().
+    /// </summary>
+    public void OnRawHit()
+    {
+        if (animator != null)
+            animator.OnHit();
+        else
+            PlayHitJuice();
+    }
+
+    /// <summary>
+    /// Routes a raw escape event from DrainEscapes.
+    /// Dispatches to animator.OnEscape(ev) if assigned; otherwise falls back to PlayEscapeJuice().
+    /// </summary>
+    public void OnRawEscape(CropStealEvent ev)
+    {
+        if (animator != null)
+            animator.OnEscape(ev);
+        else
+            PlayEscapeJuice();
     }
 
     public void PlayHitJuice()

@@ -32,6 +32,7 @@ public sealed class GameController : MonoBehaviour
     [SerializeField] private Text remainingTimeText; // "01:00" ticking down (A5)
 
     private GameRules _rules;
+    private MoleIntentTracker _intentTracker;
     private HoleVisuals _holeVisuals;
     private InputAction _tapAction;
     private InputAction _pointAction;
@@ -66,6 +67,8 @@ public sealed class GameController : MonoBehaviour
 
         _rules = new GameRules(cfg, () => UnityEngine.Random.value);
         _rules.StartMatch();
+        _intentTracker = new MoleIntentTracker(holeCount);
+        _intentTracker.Reset();
         if (moles != null)
             for (int i = 0; i < moles.Length; i++)
                 if (moles[i] != null) moles[i].Bind(_rules, i);
@@ -106,19 +109,29 @@ public sealed class GameController : MonoBehaviour
         // 1. Advance rules: Telegraph -> Rise -> Up -> (escape steals crop at T).
         _rules.Update(_elapsedMs);
 
-        // 2. Same-frame escape drain: visuals consume the queue immediately; rules
-        //    never wait on animation (design D2 / data flow).
+        // 2. Same-frame escape drain: route through OnRawEscape (animator bridge)
+        //    so escapes reach the animator BEFORE phase-edge Sink (B-7 ordering).
         var escapes = _rules.DrainEscapes();
         for (int e = 0; e < escapes.Count; e++)
         {
             var ev = escapes[e];
             if (moles != null && ev.MoleIndex >= 0 && ev.MoleIndex < moles.Length && moles[ev.MoleIndex] != null)
-                moles[ev.MoleIndex].PlayEscapeJuice();
+                moles[ev.MoleIndex].OnRawEscape(ev);
             if (crops != null && ev.CropIndex >= 0 && ev.CropIndex < crops.Length && crops[ev.CropIndex] != null)
                 crops[ev.CropIndex].SetStolen();
         }
 
-        // 3. Spawn scheduling.
+        // 3. Poll phase-edge intents AFTER Update+DrainEscapes but BEFORE TrySpawn.
+        //    This ordering ensures Sinking→Sunk (Reset) is captured before a new spawn
+        //    overwrites the hole phase.
+        var intents = _intentTracker.Poll(_rules, _elapsedMs);
+        foreach (var ev in intents)
+        {
+            if (ev.HoleIndex >= 0 && ev.HoleIndex < moles.Length && moles[ev.HoleIndex] != null)
+                moles[ev.HoleIndex].OnIntent(ev);
+        }
+
+        // 4. Spawn scheduling (after Poll — new mole edges detected next frame).
         _spawnCooldownMs -= deltaMs;
         if (_spawnCooldownMs <= 0f)
         {
@@ -126,7 +139,7 @@ public sealed class GameController : MonoBehaviour
             _rules.TrySpawn(_elapsedMs);
         }
 
-        // 4. Presenters read rules state.
+        // 5. Presenters read rules state (null-animator fallback path).
         if (moles != null)
             for (int i = 0; i < moles.Length; i++)
                 if (moles[i] != null) moles[i].SyncFromRules(_elapsedMs);
@@ -166,7 +179,7 @@ public sealed class GameController : MonoBehaviour
             if (moles[i] == null || distSq[i] > HitRadiusSq) break; // beyond 0.6u
             if (_rules.TryHit(i, _elapsedMs))
             {
-                if (moles[i] != null) moles[i].PlayHitJuice();
+                if (moles[i] != null) moles[i].OnRawHit();
                 _holeVisuals.RegisterTap(i, true, _elapsedMs);
                 return;
             }
