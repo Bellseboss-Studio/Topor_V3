@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c542636a1a63854192e80e49d89b40d, type: 3}
+  m_Name: DonaFlorinda
+  m_EditorClassIdentifier: Assembly-CSharp::FarmProfile
+  farmId: dona-florinda
+  displayName: "Granja de Do\xF1a Florinda"
+  theme: mexican
+  backgroundColor: {r: 0, g: 1, b: 0, a: 1}
+  levels:
+  - displayName: Nivel 1 - Tomates
+    description: 
+    durationMs: 60000
+    spawnIntervalMs: 3000
+    upWindowMs: 1600
+    riseDurationMs: 250
+    sinkDurationMs: 250
+    maxConcurrentMoles: 2
+    intensityStart: 1
+    intensityEnd: 1
+    seedsBase: 0
+    moleMods:
+    - species: {fileID: 11400000, guid: 6347fe46cc7a80045b4d125c74a0d76b, type: 2}
+      speedMultiplier: 1
+      bonusHits: 0
+      telegraphOverrideMs: -1
+      weight: 1
+    cropConfigs:
+    - species: {fileID: 11400000, guid: 8f166960304538c4ab5054f7a166041b, type: 2}
+      bonusBites: 0
+      weight: 1
+  - displayName: Nivel 2 - Repollo + Tomate
+    description: 
+    durationMs: 60000
+    spawnIntervalMs: 2600
+    upWindowMs: 1300
+    riseDurationMs: 250
+    sinkDurationMs: 250
+    maxConcurrentMoles: 3
+    intensityStart: 1
+    intensityEnd: 2
+    seedsBase: 0
+    moleMods:
+    - species: {fileID: 11400000, guid: 6347fe46cc7a80045b4d125c74a0d76b, type: 2}
+      speedMultiplier: 1
+      bonusHits: 0
+      telegraphOverrideMs: -1
+      weight: 2
+    - species: {fileID: 11400000, guid: 70861a5dee7eb4043beab344f54f6649, type: 2}
+      speedMultiplier: 1
+      bonusHits: 0
+      telegraphOverrideMs: -1
+      weight: 1
+    cropConfigs:
+    - species: {fileID: 11400000, guid: 8f166960304538c4ab5054f7a166041b, type: 2}
+      bonusBites: 0
+      weight: 1
+    - species: {fileID: 11400000, guid: 4d0a2bae022f4e5439f0071da1692a7f, type: 2}
+      bonusBites: 0
+      weight: 1
+  - displayName: Nivel 3 - Repollo + Zanahoria
+    description: 
+    durationMs: 60000
+    spawnIntervalMs: 2200
+    upWindowMs: 1000
+    riseDurationMs: 250
+    sinkDurationMs: 250
+    maxConcurrentMoles: 4
+    intensityStart: 2
+    intensityEnd: 3
+    seedsBase: 0
+    moleMods:
+    - species: {fileID: 11400000, guid: 6347fe46cc7a80045b4d125c74a0d76b, type: 2}
+      speedMultiplier: 1
+      bonusHits: 0
+      telegraphOverrideMs: -1
+      weight: 2
+    - species: {fileID: 11400000, guid: 70861a5dee7eb4043beab344f54f6649, type: 2}
+      speedMultiplier: 1
+      bonusHits: 0
+      telegraphOverrideMs: -1
+      weight: 2
+    - species: {fileID: 11400000, guid: b2e0395e5d8df574aa2ff09c1ff9520a, type: 2}
+      speedMultiplier: 1
+      bonusHits: 0
+      telegraphOverrideMs: -1
+      weight: 1
+    cropConfigs:
+    - species: {fileID: 11400000, guid: 4d0a2bae022f4e5439f0071da1692a7f, type: 2}
+      bonusBites: 0
+      weight: 1
+    - species: {fileID: 11400000, guid: ada8e68565eb61649826687bbddceebd, type: 2}
+      bonusBites: 0
+      weight: 1

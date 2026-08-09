@@ -18,19 +18,9 @@ public sealed class GameController : MonoBehaviour
         public int[] Crops;
     }
 
-    [Header("Difficulty")]
-    [SerializeField] private AnimationCurve difficultyCurve = new AnimationCurve(
-        new Keyframe(0f, 0f), new Keyframe(0.5f, 2f), new Keyframe(1f, 0f));
-    [SerializeField] private float matchDurationSec = 60f;
-
-    [Header("Mole timing (ms)")]
-    [SerializeField] private float telegraphMs = 800f;
-    [SerializeField] private float upWindowMs = 1500f;
-    [SerializeField] private float riseMs = 250f;
-    [SerializeField] private float sinkMs = 250f;
-
-    [Header("Spawning")]
-    [SerializeField] private float baseSpawnIntervalSec = 3f;
+    [Header("Farm")]
+    [SerializeField] private FarmProfile farmProfile;
+    [SerializeField] private int currentLevelIndex;
 
     [Header("References")]
     [SerializeField] private Mole[] moles;          // one per hole (17, per adjacency table)
@@ -54,22 +44,24 @@ public sealed class GameController : MonoBehaviour
         int holeCount = moles != null ? moles.Length : 0;
         int cropCount = crops != null ? crops.Length : 0;
 
+        LevelProfile level = farmProfile != null ? farmProfile.GetLevel(currentLevelIndex) : null;
+
         var cfg = new GameRulesConfig
         {
-            MatchDurationMs = matchDurationSec * 1000f,
-            TelegraphDurationMs = telegraphMs,
-            UpWindowMs = upWindowMs,
-            RiseDurationMs = riseMs,
-            SinkDurationMs = sinkMs,
+            MatchDurationMs = level != null ? level.durationMs : 60_000f,
+            TelegraphDurationMs = level != null && level.moleMods.Length > 0 ? level.moleMods[0].EffectiveTelegraphMs : 800f,
+            UpWindowMs = level != null ? level.upWindowMs : 1500f,
+            RiseDurationMs = level != null ? level.riseDurationMs : 250f,
+            SinkDurationMs = level != null ? level.sinkDurationMs : 250f,
             CropCount = cropCount,
             HoleCount = holeCount,
-            // grid-v2 adjacency: serialized rows -> pure int[][] config (P1). The
-            // rules are never bound to the scene; the table IS the source of truth.
             HoleCandidates = holeAdjacencies != null
                 ? Array.ConvertAll(holeAdjacencies, a => a != null && a.Crops != null ? a.Crops : Array.Empty<int>())
                 : null,
-            BaseSpawnIntervalMs = baseSpawnIntervalSec * 1000f,
-            IntensityCurve = p => difficultyCurve.Evaluate(p), // curve -> pure seam
+            BaseSpawnIntervalMs = level != null ? level.spawnIntervalMs : 3_000f,
+            IntensityCurve = p => level != null ? level.IntensityAt(p) : 1f,
+            Level = level,
+            Farm = farmProfile,
         };
 
         _rules = new GameRules(cfg, () => UnityEngine.Random.value);
@@ -214,7 +206,8 @@ public sealed class GameController : MonoBehaviour
         // Timer (A5): remaining match time, updated at least once per second, MM:SS.
         if (remainingTimeText != null)
         {
-            float remainingMs = Mathf.Max(0f, matchDurationSec * 1000f - _elapsedMs);
+            float matchMs = (farmProfile != null ? farmProfile.GetLevel(currentLevelIndex) : null)?.durationMs ?? 60_000f;
+            float remainingMs = Mathf.Max(0f, matchMs - _elapsedMs);
             int second = (int)(remainingMs / 1000f);
             if (second != _lastHudSecond)
             {

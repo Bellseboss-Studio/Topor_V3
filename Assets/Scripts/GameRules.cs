@@ -32,18 +32,18 @@ public readonly struct CropStealEvent
 public sealed class GameRulesConfig
 {
     public float MatchDurationMs = 60_000f;
-    public float TelegraphDurationMs = 800f;   // announce window before Rising (D4)
+    public float TelegraphDurationMs = 800f;
     public float UpWindowMs = 1_500f;
     public float RiseDurationMs = 250f;
     public float SinkDurationMs = 250f;
-    public int CropCount = 6;                  // crops ARE lives (D3)
-    public int HoleCount = 17;                 // grid-v2 RELAYOUT: 17-hole damero default
-    // grid-v2 adjacency (A1): hole index -> candidate crop indexes (0..4). Pure C#,
-    // no UnityEngine. Row index == hole index == Mole n binding contract (P7).
+    public int CropCount = 6;
+    public int HoleCount = 17;
     public int[][] HoleCandidates;
     public float BaseSpawnIntervalMs = 3_000f;
-    // progress (0..1) -> intensity (max concurrent moles). Single source of truth.
     public Func<float, float> IntensityCurve = p => 1f;
+
+    public LevelProfile Level;
+    public FarmProfile Farm;
 }
 
 public sealed class GameRules
@@ -55,6 +55,11 @@ public sealed class GameRules
     private readonly bool[] _wasHit;
     private readonly int[] _threatenedCrop; // per hole: crop index the mole will steal, or -1
     private readonly bool[] _cropAlive;
+    private readonly int[] _cropBites;      // per crop: bites taken so far
+    private readonly int[] _hitsRemaining;   // per hole: hits left to kill this mole
+    private readonly int[] _archetypeIndex;  // per hole: index into _currentMods
+    private LevelMoleMod[] _currentMods;
+    private LevelCropConfig[] _currentCrops;
     private readonly List<CropStealEvent> _escapeQueue = new List<CropStealEvent>();
 
     public int Score { get; private set; }
@@ -89,6 +94,11 @@ public sealed class GameRules
         _wasHit = new bool[cfg.HoleCount];
         _threatenedCrop = new int[cfg.HoleCount];
         _cropAlive = new bool[cfg.CropCount];
+        _cropBites = new int[cfg.CropCount];
+        _hitsRemaining = new int[cfg.HoleCount];
+        _archetypeIndex = new int[cfg.HoleCount];
+        _currentMods = cfg.Level != null ? (cfg.Level.moleMods ?? new LevelMoleMod[0]) : new LevelMoleMod[0];
+        _currentCrops = cfg.Level != null ? (cfg.Level.cropConfigs ?? new LevelCropConfig[0]) : new LevelCropConfig[0];
         StartMatch();
     }
 
@@ -98,13 +108,19 @@ public sealed class GameRules
         IsGameOver = false;
         _levelComplete = false;
         _escapeQueue.Clear();
-        for (int c = 0; c < _cfg.CropCount; c++) _cropAlive[c] = true;
+        for (int c = 0; c < _cfg.CropCount; c++)
+        {
+            _cropAlive[c] = true;
+            _cropBites[c] = 0;
+        }
         for (int i = 0; i < _cfg.HoleCount; i++)
         {
             _phases[i] = MolePhase.Sunk;
             _phaseStartMs[i] = 0f;
             _wasHit[i] = false;
             _threatenedCrop[i] = -1;
+            _hitsRemaining[i] = 0;
+            _archetypeIndex[i] = -1;
         }
     }
 
@@ -193,15 +209,16 @@ public sealed class GameRules
         for (int i = 0; i < _cfg.HoleCount; i++)
         {
             float elapsed = nowMs - _phaseStartMs[i];
+            float telegraphMs = TelegraphDurationFor(i);
             switch (_phases[i])
-            {
-                case MolePhase.Telegraphing:
-                    if (elapsed >= _cfg.TelegraphDurationMs)
-                    {
-                        _phases[i] = MolePhase.Rising;
-                        _phaseStartMs[i] += _cfg.TelegraphDurationMs;
-                    }
-                    break;
+                {
+                    case MolePhase.Telegraphing:
+                        if (elapsed >= telegraphMs)
+                        {
+                            _phases[i] = MolePhase.Rising;
+                            _phaseStartMs[i] += telegraphMs;
+                        }
+                        break;
 
                 case MolePhase.Rising:
                     if (elapsed >= _cfg.RiseDurationMs)
@@ -235,23 +252,53 @@ public sealed class GameRules
     private void StealBoundCrop(int moleIndex, float nowMs)
     {
         int crop = _threatenedCrop[moleIndex];
-        if (crop < 0 || crop >= _cfg.CropCount || !_cropAlive[crop]) return; // dead-target no-op (P4)
-        _cropAlive[crop] = false;
-        _escapeQueue.Add(new CropStealEvent(moleIndex, crop, nowMs));
-        if (Lives == 0) IsGameOver = true;
+        if (crop < 0 || crop >= _cfg.CropCount || !_cropAlive[crop]) return;
+
+        int modIdx = _archetypeIndex[moleIndex];
+        int bites = (modIdx >= 0 && modIdx < _currentMods.Length)
+            ? _currentMods[modIdx].BitesOnEscape : 1;
+
+        _cropBites[crop] += bites;
+        int maxBites = MaxBitesForCrop(crop);
+
+        if (_cropBites[crop] >= maxBites)
+        {
+            _cropAlive[crop] = false;
+            _escapeQueue.Add(new CropStealEvent(moleIndex, crop, nowMs));
+            if (Lives == 0) IsGameOver = true;
+        }
+    }
+
+    public int MaxBitesForCrop(int cropIndex)
+    {
+        if (_currentCrops != null && cropIndex >= 0 && cropIndex < _currentCrops.Length && _currentCrops[cropIndex] != null)
+            return _currentCrops[cropIndex].TotalBites;
+        return 1;
+    }
+
+    public int BitesOnCrop(int cropIndex)
+    {
+        if (cropIndex >= 0 && cropIndex < _cfg.CropCount)
+            return _cropBites[cropIndex];
+        return 0;
     }
 
     public bool TryHit(int moleIndex, float nowMs)
     {
-        if (IsGameOver || _levelComplete) return false; // post-gate hits ignored (A4-1)
+        if (IsGameOver || _levelComplete) return false;
         if (moleIndex < 0 || moleIndex >= _cfg.HoleCount) return false;
-        // M2/P6: hittable during Rising AND Up; never Telegraphing/Sinking/Sunk.
         if (_phases[moleIndex] != MolePhase.Rising &&
             _phases[moleIndex] != MolePhase.Up) return false;
+
         Score++;
         _wasHit[moleIndex] = true;
-        _phases[moleIndex] = MolePhase.Sinking; // immediate sink, never hittable again
-        _phaseStartMs[moleIndex] = nowMs;
+        _hitsRemaining[moleIndex]--;
+
+        if (_hitsRemaining[moleIndex] <= 0)
+        {
+            _phases[moleIndex] = MolePhase.Sinking;
+            _phaseStartMs[moleIndex] = nowMs;
+        }
         return true;
     }
 
@@ -282,11 +329,65 @@ public sealed class GameRules
             if (IsCropAlive(candidates[k])) alive.Add(candidates[k]);
         int target = alive[RollIndex(_randomUnit(), alive.Count)];
 
-        _phases[hole] = MolePhase.Telegraphing; // announce first; rise after telegraph
+        LevelMoleMod mod = RollMod();
+        int modIndex = mod != null ? Array.IndexOf(_currentMods, mod) : -1;
+        if (modIndex < 0 && _currentMods != null && _currentMods.Length > 0)
+        {
+            mod = _currentMods[0];
+            modIndex = 0;
+        }
+        _archetypeIndex[hole] = modIndex;
+        _hitsRemaining[hole] = mod != null ? mod.TotalHits : 1;
+
+        if (mod != null && mod.UseTelegraph)
+            _phases[hole] = MolePhase.Telegraphing;
+        else
+            _phases[hole] = MolePhase.Rising;
+
         _phaseStartMs[hole] = nowMs;
-        _wasHit[hole] = false;                 // fresh lifecycle
-        _threatenedCrop[hole] = target;        // mole decided its target (A2)
+        _wasHit[hole] = false;
+        _threatenedCrop[hole] = target;
         return true;
+    }
+
+    private LevelMoleMod RollMod()
+    {
+        if (_currentMods == null || _currentMods.Length == 0)
+            return null;
+
+        int totalWeight = 0;
+        for (int i = 0; i < _currentMods.Length; i++)
+            totalWeight += Math.Max(1, _currentMods[i].weight);
+
+        if (totalWeight <= 0)
+            return _currentMods[0];
+
+        int roll = (int)(_randomUnit() * totalWeight);
+        int cumulative = 0;
+        for (int i = 0; i < _currentMods.Length; i++)
+        {
+            cumulative += Math.Max(1, _currentMods[i].weight);
+            if (roll < cumulative)
+                return _currentMods[i];
+        }
+
+        return _currentMods[_currentMods.Length - 1];
+    }
+
+    private float TelegraphDurationFor(int holeIndex)
+    {
+        int modIdx = _archetypeIndex[holeIndex];
+        if (modIdx >= 0 && modIdx < _currentMods.Length)
+            return _currentMods[modIdx].EffectiveTelegraphMs;
+        return _cfg.TelegraphDurationMs;
+    }
+
+    public LevelMoleMod GetMod(int holeIndex)
+    {
+        int idx = _archetypeIndex[holeIndex];
+        if (idx >= 0 && idx < _currentMods.Length)
+            return _currentMods[idx];
+        return null;
     }
 
     // roll*len -> index, clamped against float precision (0.99*10 = 9.899999 -> 9).

@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c542636a1a63854192e80e49d89b40d, type: 3}
+  m_Name: DonaFlorinda
+  m_EditorClassIdentifier: Assembly-CSharp::FarmProfile
+  farmId: 1
+  displayName: Frondinda's Farm
+  theme: 
+  backgroundColor: {r: 0, g: 1, b: 0, a: 1}
+  levels:
+  - displayName: level 1
+    description: 1
+    durationMs: 60000
+    spawnIntervalMs: 0
+    upWindowMs: 0
+    riseDurationMs: 0
+    sinkDurationMs: 0
+    maxConcurrentMoles: 0
+    intensityStart: 0
+    intensityEnd: 0
+    seedsBase: 0
+    moleMods:
+    - species: {fileID: 11400000, guid: 5ea17ad69f5f6664fa581efc872ea9ba, type: 2}
+      speedMultiplier: 0
+      bonusHits: 0
+      telegraphOverrideMs: 0
+      weight: 0
+    cropConfigs:
+    - species: {fileID: 11400000, guid: 8fff64c8de49d3942a5727e6b932bd00, type: 2}
+      bonusBites: 0
+      weight: 0
+  - displayName: level 2
+    description: 2
+    durationMs: 60000
+    spawnIntervalMs: 0
+    upWindowMs: 0
+    riseDurationMs: 0
+    sinkDurationMs: 0
+    maxConcurrentMoles: 0
+    intensityStart: 0
+    intensityEnd: 0
+    seedsBase: 0
+    moleMods:
+    - species: {fileID: 11400000, guid: 6347fe46cc7a80045b4d125c74a0d76b, type: 2}
+      speedMultiplier: 0
+      bonusHits: 0
+      telegraphOverrideMs: 0
+      weight: 0
+    - species: {fileID: 11400000, guid: 70861a5dee7eb4043beab344f54f6649, type: 2}
+      speedMultiplier: 0
+      bonusHits: 0
+      telegraphOverrideMs: 0
+      weight: 0
+    cropConfigs:
+    - species: {fileID: 11400000, guid: 4d0a2bae022f4e5439f0071da1692a7f, type: 2}
+      bonusBites: 0
+      weight: 0
+  - displayName: level 1
+    description: 1
+    durationMs: 60000
+    spawnIntervalMs: 0
+    upWindowMs: 0
+    riseDurationMs: 0
+    sinkDurationMs: 0
+    maxConcurrentMoles: 0
+    intensityStart: 0
+    intensityEnd: 0
+    seedsBase: 0
+    moleMods:
+    - species: {fileID: 11400000, guid: 5ea17ad69f5f6664fa581efc872ea9ba, type: 2}
+      speedMultiplier: 0
+      bonusHits: 0
+      telegraphOverrideMs: 0
+      weight: 0
+    cropConfigs:
+    - species: {fileID: 11400000, guid: 8fff64c8de49d3942a5727e6b932bd00, type: 2}
+      bonusBites: 0
+      weight: 0
