@@ -170,6 +170,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1103145577}
   fruitSprite: {fileID: 1906173068}
   fruitTransform: {fileID: 1906173067}
+  animator: {fileID: 0}
 --- !u!1 &19438087
 GameObject:
   m_ObjectHideFlags: 0
@@ -910,6 +911,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 437932937}
   fruitSprite: {fileID: 1773125820}
   fruitTransform: {fileID: 1773125819}
+  animator: {fileID: 0}
 --- !u!1 &184590211
 GameObject:
   m_ObjectHideFlags: 0
@@ -1175,6 +1177,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 650635238}
   fruitSprite: {fileID: 490993589}
   fruitTransform: {fileID: 490993588}
+  animator: {fileID: 0}
 --- !u!1 &254138786
 GameObject:
   m_ObjectHideFlags: 0
@@ -1553,6 +1556,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 613699447}
   fruitSprite: {fileID: 842366757}
   fruitTransform: {fileID: 842366756}
+  animator: {fileID: 0}
 --- !u!1 &340489962
 GameObject:
   m_ObjectHideFlags: 0
@@ -1604,6 +1608,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1344013676}
   fruitSprite: {fileID: 1312493972}
   fruitTransform: {fileID: 1312493971}
+  animator: {fileID: 0}
 --- !u!1 &356288815
 GameObject:
   m_ObjectHideFlags: 0
@@ -2249,6 +2254,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 401215732}
   fruitSprite: {fileID: 19438089}
   fruitTransform: {fileID: 19438088}
+  animator: {fileID: 0}
 --- !u!1 &490993587
 GameObject:
   m_ObjectHideFlags: 0
@@ -3210,6 +3216,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1675258451}
   fruitSprite: {fileID: 1952960118}
   fruitTransform: {fileID: 1952960117}
+  animator: {fileID: 0}
 --- !u!1 &766278586
 GameObject:
   m_ObjectHideFlags: 0
@@ -3261,6 +3268,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1629754432}
   fruitSprite: {fileID: 42356094}
   fruitTransform: {fileID: 42356093}
+  animator: {fileID: 0}
 --- !u!1 &784746089
 GameObject:
   m_ObjectHideFlags: 0
@@ -3619,6 +3627,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 132971508}
   fruitSprite: {fileID: 1360528657}
   fruitTransform: {fileID: 1360528656}
+  animator: {fileID: 0}
 --- !u!1 &964736288
 GameObject:
   m_ObjectHideFlags: 0
@@ -3868,6 +3877,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1243319850}
   fruitSprite: {fileID: 2042920181}
   fruitTransform: {fileID: 2042920180}
+  animator: {fileID: 0}
 --- !u!1 &1103145576
 GameObject:
   m_ObjectHideFlags: 0
@@ -4101,6 +4111,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1114982845}
   fruitSprite: {fileID: 1528883614}
   fruitTransform: {fileID: 1528883613}
+  animator: {fileID: 0}
 --- !u!1 &1152292623
 GameObject:
   m_ObjectHideFlags: 0
@@ -4334,6 +4345,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1858648717}
   fruitSprite: {fileID: 1381842004}
   fruitTransform: {fileID: 1381842003}
+  animator: {fileID: 0}
 --- !u!1 &1179782681
 GameObject:
   m_ObjectHideFlags: 0
@@ -4891,45 +4903,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4eecdec492f47244ab08521fdfd54fa6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameController
-  difficultyCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.5
-      value: 2
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  matchDurationSec: 60
-  telegraphMs: 800
-  upWindowMs: 1500
-  riseMs: 250
-  sinkMs: 250
-  baseSpawnIntervalSec: 3
+  farmProfile: {fileID: 11400000, guid: 29b0b4012bc182b438d319b3ea0d2c89, type: 2}
+  currentLevelIndex: 0
   moles:
   - {fileID: 1142702461}
   - {fileID: 336798164}
@@ -5642,6 +5617,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1152292624}
   fruitSprite: {fileID: 1179782683}
   fruitTransform: {fileID: 1179782682}
+  animator: {fileID: 0}
 --- !u!1 &1629754431
 GameObject:
   m_ObjectHideFlags: 0
@@ -5966,6 +5942,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 113338626}
   fruitSprite: {fileID: 400565905}
   fruitTransform: {fileID: 400565904}
+  animator: {fileID: 0}
 --- !u!1 &1748865789
 GameObject:
   m_ObjectHideFlags: 0
@@ -6478,6 +6455,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 679253767}
   fruitSprite: {fileID: 1841418269}
   fruitTransform: {fileID: 1841418268}
+  animator: {fileID: 0}
 --- !u!1 &1884363334
 GameObject:
   m_ObjectHideFlags: 0
@@ -6820,6 +6798,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1668900104}
   fruitSprite: {fileID: 964736290}
   fruitTransform: {fileID: 964736289}
+  animator: {fileID: 0}
 --- !u!1 &1975617674
 GameObject:
   m_ObjectHideFlags: 0
@@ -6871,6 +6850,7 @@ MonoBehaviour:
   spriteTransform: {fileID: 1165619854}
   fruitSprite: {fileID: 262642021}
   fruitTransform: {fileID: 262642020}
+  animator: {fileID: 0}
 --- !u!1 &1976802575
 GameObject:
   m_ObjectHideFlags: 0

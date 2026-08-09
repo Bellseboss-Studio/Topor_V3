@@ -12,6 +12,7 @@ See `_shared/skill-resolver.md` for the full resolution protocol.
 | PR would exceed 400 changed lines; planning chained/stacked PRs or reviewable slices | gentle-ai-chained-pr | C:\Users\luis_\.config\opencode\skills\chained-pr\SKILL.md |
 | Writing guides, READMEs, RFCs, onboarding docs, architecture docs, review-facing docs | cognitive-doc-design | C:\Users\luis_\.config\opencode\skills\cognitive-doc-design\SKILL.md |
 | Drafting or posting feedback, review comments, maintainer replies, Slack messages, GitHub comments | comment-writer | C:\Users\luis_\.config\opencode\skills\comment-writer\SKILL.md |
+| Helping users discover and install agent skills ("how do I do X", "find a skill for X") | find-skills | C:\Users\luis_\.agents\skills\find-skills\SKILL.md |
 | Writing Go tests, using teatest, adding test coverage | go-testing | C:\Users\luis_\.config\opencode\skills\go-testing\SKILL.md |
 | Creating a GitHub issue, reporting a bug, requesting a feature | issue-creation | C:\Users\luis_\.config\opencode\skills\issue-creation\SKILL.md |
 | "judgment day", "judgment-day", adversarial/dual review, "juzgar", "que lo juzguen" | judgment-day | C:\Users\luis_\.config\opencode\skills\judgment-day\SKILL.md |
@@ -53,6 +54,10 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 - Avoid pile-ons — comment on the highest-value issue only
 - Match the thread language; in Spanish use Rioplatense voseo (podés, tenés, fijate, dale)
 - No em dashes — use commas, periods, or parentheses
+
+### find-skills
+- Discovery skill: when the user asks "how do I do X" / "find a skill for X", search installable skill sources
+- Use for capability discovery only — do not apply to project code
 
 ### go-testing
 - Use table-driven tests for multiple cases (name, input, expected, wantErr)
