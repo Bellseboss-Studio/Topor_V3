@@ -140,7 +140,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgconf-2-4 libglu1-mesa
+          sudo apt-get install -y libglu1-mesa
 
       - name: Build Linux
         uses: game-ci/unity-builder@v4
