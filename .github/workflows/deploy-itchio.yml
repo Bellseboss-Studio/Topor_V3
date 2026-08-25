@@ -71,6 +71,80 @@ jobs:
           name: build-Android
           path: build/Android
 
+  build-pc:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Windows
+            runner: windows-latest
+            target: StandaloneWindows64
+            artifact: ToporV3-Windows
+            artifactName: build-Windows
+            path: build/Windows/
+            channel: windows
+          - os: macOS
+            runner: macos-latest
+            target: StandaloneOSX
+            artifact: ToporV3-macOS
+            artifactName: build-macOS
+            path: build/macOS/
+            channel: macos
+          - os: Linux
+            runner: ubuntu-latest
+            target: StandaloneLinux64
+            artifact: ToporV3-Linux
+            artifactName: build-Linux
+            path: build/Linux/
+            channel: linux
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.target }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ matrix.target }}-
+            Library-
+
+      - name: Setup Unity
+        uses: game-ci/unity-installer@v4
+        with:
+          unityVersion: 6000.0.38f1
+          cacheKey: unity-${{ matrix.os }}
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgconf-2-4 libglu1-mesa
+
+      - name: Build ${{ matrix.os }}
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: ${{ matrix.target }}
+          buildName: ${{ matrix.artifact }}
+          outputPath: build
+          customParameters: -executeMethod BuildScript.PerformBuild
+
+      - name: Upload ${{ matrix.os }} Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifactName }}
+          path: ${{ matrix.path }}
+          retention-days: 7
+
   deployWebGL:
     name: Deploy WebGL to Itch
     runs-on: ubuntu-latest
@@ -109,114 +183,11 @@ jobs:
           ITCH_USER: peryloth
           PACKAGE: build/Android
 
-  build-windows:
-    name: Build Windows
-    runs-on: windows-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Setup Unity
-        uses: game-ci/unity-installer@v4
-        with:
-          unityVersion: 6000.0.38f1
-          cacheKey: unity-windows
-
-      - name: Build Windows
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          targetPlatform: StandaloneWindows64
-          buildName: ToporV3-Windows
-          outputPath: build
-          customParameters: -executeMethod BuildScript.PerformBuild
-
-      - name: Upload Windows Build
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-Windows
-          path: build/Windows/
-
-  build-macos:
-    name: Build macOS
-    runs-on: macos-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Setup Unity
-        uses: game-ci/unity-installer@v4
-        with:
-          unityVersion: 6000.0.38f1
-          cacheKey: unity-macos
-
-      - name: Build macOS
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          targetPlatform: StandaloneOSX
-          buildName: ToporV3-macOS
-          outputPath: build
-          customParameters: -executeMethod BuildScript.PerformBuild
-
-      - name: Upload macOS Build
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-macOS
-          path: build/macOS/
-
-  build-linux:
-    name: Build Linux
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Setup Unity
-        uses: game-ci/unity-installer@v4
-        with:
-          unityVersion: 6000.0.38f1
-          cacheKey: unity-linux
-
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgconf-2-4 libglu1-mesa
-
-      - name: Build Linux
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          targetPlatform: StandaloneLinux64
-          buildName: ToporV3-Linux
-          outputPath: build
-          customParameters: -executeMethod BuildScript.PerformBuild
-
-      - name: Upload Linux Build
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-Linux
-          path: build/Linux/
-
   deployWindows:
     name: Deploy Windows to Itch
     runs-on: ubuntu-latest
-    needs: build-windows
+    needs: build-pc
+    if: always() && contains(needs.build-pc.result, 'success')
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -235,7 +206,8 @@ jobs:
   deployMacOS:
     name: Deploy macOS to Itch
     runs-on: ubuntu-latest
-    needs: build-macos
+    needs: build-pc
+    if: always() && contains(needs.build-pc.result, 'success')
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -254,7 +226,8 @@ jobs:
   deployLinux:
     name: Deploy Linux to Itch
     runs-on: ubuntu-latest
-    needs: build-linux
+    needs: build-pc
+    if: always() && contains(needs.build-pc.result, 'success')
     steps:
       - uses: actions/download-artifact@v4
         with:
