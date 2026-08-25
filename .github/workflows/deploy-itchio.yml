@@ -37,7 +37,6 @@ jobs:
         with:
           targetPlatform: ${{ matrix.targetPlatform }}
           buildsPath: build
-          customParameters: -executeMethod BuildScript.PerformBuild
 
       - name: Upload ${{ matrix.targetPlatform }} Build
         uses: actions/upload-artifact@v4
@@ -73,7 +72,6 @@ jobs:
           targetPlatform: StandaloneWindows64
           buildName: ToporV3-Windows
           outputPath: build
-          customParameters: -executeMethod BuildScript.PerformBuild
           unityVersion: 6000.0.38f1
 
       - name: Upload Windows Build
@@ -110,7 +108,6 @@ jobs:
           targetPlatform: StandaloneOSX
           buildName: ToporV3-macOS
           outputPath: build
-          customParameters: -executeMethod BuildScript.PerformBuild
           unityVersion: 6000.0.38f1
 
       - name: Upload macOS Build
@@ -152,7 +149,6 @@ jobs:
           targetPlatform: StandaloneLinux64
           buildName: ToporV3-Linux
           outputPath: build
-          customParameters: -executeMethod BuildScript.PerformBuild
           unityVersion: 6000.0.38f1
 
       - name: Upload Linux Build
